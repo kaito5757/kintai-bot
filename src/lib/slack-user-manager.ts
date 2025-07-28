@@ -1,7 +1,6 @@
 import { db } from '@/db';
 import { slackUsers } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { CompanyManager } from './company-manager';
 
 export interface SlackUserInfo {
   slackUserId: string;
@@ -14,7 +13,7 @@ export interface SlackUserInfo {
 
 export class SlackUserManager {
   // ユーザー情報を取得または作成
-  static async getOrCreateUser(userInfo: SlackUserInfo, companyId: string) {
+  static async getOrCreateUser(userInfo: SlackUserInfo) {
     // 既存ユーザーを検索
     const existingUser = await db
       .select()
@@ -31,7 +30,7 @@ export class SlackUserManager {
           displayName: userInfo.displayName || existingUser[0].displayName,
           realName: userInfo.realName || existingUser[0].realName,
           email: userInfo.email || existingUser[0].email,
-          companyId: companyId, // 会社IDを更新
+          teamId: userInfo.teamId,
           updatedAt: new Date(),
         })
         .where(eq(slackUsers.slackUserId, userInfo.slackUserId));
@@ -43,7 +42,7 @@ export class SlackUserManager {
         .insert(slackUsers)
         .values({
           slackUserId: userInfo.slackUserId,
-          companyId: companyId, // 会社IDを設定
+          teamId: userInfo.teamId,
           username: userInfo.username,
           displayName: userInfo.displayName,
           realName: userInfo.realName,
@@ -113,7 +112,7 @@ export class SlackUserManager {
       return await this.getOrCreateUser(userInfo);
     } else {
       // API取得失敗時は最小限の情報で作成
-      return await this.getOrCreateUser({ slackUserId });
+      return await this.getOrCreateUser({ slackUserId, teamId: 'unknown' });
     }
   }
 }
