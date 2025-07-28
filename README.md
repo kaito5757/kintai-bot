@@ -5,118 +5,176 @@ Slack連携による勤怠管理システム。スラッシュコマンドやボ
 ## 機能
 
 - **専用スラッシュコマンド**で簡単入力：`/start`, `/end`, `/break`, `/back`
-- `/kintai` スラッシュコマンドでインタラクティブなボタンを表示
-- テキストコマンドでの直接入力も可能（`/kintai start`, `/kintai end` など）
 - メッセージベースでの記録（「業務開始」「業務終了」などのメッセージを送信）
 - **ステータス管理**（退勤→業務中→休憩中の適切な遷移チェック）
 - Web管理画面で月ごとの勤怠一覧を表示
 - 合計稼働時間の自動計算（休憩時間を差し引き）
 
+## 技術スタック
+
+- **Frontend**: Next.js 15.4.4, React 19.1.0, TypeScript 5, Tailwind CSS 4
+- **Backend**: Next.js API Routes, Slack Events API
+- **Database**: PostgreSQL (Neon), Drizzle ORM 0.44.3
+- **Deployment**: Vercel
+- **Package Manager**: pnpm
+
 ## セットアップ
 
 ### 1. 環境設定
 
-`.env.example` を `.env.local` にコピーして、必要な情報を設定：
+`.env.local` ファイルを作成して、必要な情報を設定：
 
 ```bash
-cp .env.example .env.local
+# Slack設定
+SLACK_SIGNING_SECRET=your_slack_signing_secret
+SLACK_BOT_TOKEN=xoxb-your-bot-token
+
+# データベース（Neon PostgreSQL）
+DATABASE_URL=postgresql://username:password@host:5432/database?sslmode=require
 ```
 
 ### 2. 依存関係のインストール
 
 ```bash
-npm install
+pnpm install
 ```
 
-### 3. データベースの起動
+### 3. データベースのセットアップ
 
 ```bash
-docker-compose up -d
+# スキーマをデータベースにプッシュ
+pnpm run db:push
+
+# または、マイグレーションファイルを生成してから実行
+pnpm run db:generate
+pnpm run db:migrate
 ```
 
-### 4. データベースのセットアップ
+### 4. 開発サーバーの起動
 
 ```bash
-npm run db:push
-```
-
-### 5. 開発サーバーの起動
-
-```bash
-npm run dev
+pnpm run dev
 ```
 
 ## Slack App設定
 
 ### 1. OAuth & Permissions
+
 - Bot Token Scopesに以下を追加：
   - `chat:write`
   - `channels:history`
   - `commands`
 
 ### 2. Event Subscriptions
+
 - Enable Events: ON
 - Request URL: `https://your-domain.com/api/slack/events`
 - Subscribe to bot events:
   - `message.channels`
 
 ### 3. Slash Commands
-**メインコマンド:**
-- Command: `/kintai`
-- Request URL: `https://your-domain.com/api/slack/commands`
-- Short Description: 勤怠を記録
-- Usage Hint: [start|end|break|back]
-
-**専用コマンド（推奨）:**
+以下の専用コマンドを設定：
 - Command: `/start`, Request URL: `https://your-domain.com/api/start`, Description: 業務開始
-- Command: `/end`, Request URL: `https://your-domain.com/api/end`, Description: 業務終了  
+- Command: `/end`, Request URL: `https://your-domain.com/api/end`, Description: 業務終了
 - Command: `/break`, Request URL: `https://your-domain.com/api/break`, Description: 休憩開始
 - Command: `/back`, Request URL: `https://your-domain.com/api/back`, Description: 休憩終了
 
-### 4. Interactivity & Shortcuts
-- Interactivity: ON
-- Request URL: `https://your-domain.com/api/slack/interactions`
+### 4. アプリをチャンネルに追加
 
-### 5. アプリをチャンネルに追加
-```
+```bash
 /invite @your-bot-name
 ```
 
 ## 使い方
 
-### 🚀 専用スラッシュコマンド（推奨）
-最も簡単な方法：
+### 🚀 スラッシュコマンド
+
+以下のコマンドで勤怠を記録：
+
 - `/start` - 業務開始
 - `/end` - 業務終了
 - `/break` - 休憩開始
 - `/back` - 休憩終了
 
-### スラッシュコマンド
-- `/kintai` - ボタン付きのインタラクティブメニューを表示
-- `/kintai start` または `/kintai 開始` - 業務開始
-- `/kintai end` または `/kintai 終了` - 業務終了
-- `/kintai break` または `/kintai 休憩` - 休憩開始
-- `/kintai back` または `/kintai 戻る` - 休憩終了
-
 ### メッセージ送信
+
 チャンネルに以下のメッセージを送信しても記録されます：
+
 - 「業務開始」
 - 「業務終了」
 - 「休憩開始」
 - 「休憩終了」
 
 ### Web管理画面
-http://localhost:3000/attendance で勤怠一覧を確認できます。
+
+- 勤怠一覧: `http://localhost:3000/attendance`
+- チャンネル別勤怠: `http://localhost:3000/attendance/{channelId}`
+- ユーザー別勤怠: `http://localhost:3000/attendance/{channelId}/{userId}`
 
 ## データベース管理
 
 ```bash
 # マイグレーション生成
-npm run db:generate
+pnpm run db:generate
 
 # マイグレーション実行
-npm run db:migrate
+pnpm run db:migrate
+
+# スキーマをデータベースにプッシュ（開発時推奨）
+pnpm run db:push
 
 # Drizzle Studio（DB管理画面）
-npm run db:studio
+pnpm run db:studio
+```
+
+## デプロイ
+
+### Vercelへのデプロイ
+
+1. **Vercelプロジェクト作成**
+
+   ```bash
+   vercel
+   ```
+
+2. **環境変数設定**
+   - Vercel Dashboard → Settings → Environment Variables
+   - 以下の環境変数を設定：
+     - `SLACK_SIGNING_SECRET`
+     - `SLACK_BOT_TOKEN`
+     - `DATABASE_URL`
+
+3. **Functions実行リージョン設定**
+   - Settings → Functions → Region → Asia-Pacific (Tokyo)
+
+4. **デプロイ**
+
+   ```bash
+   vercel --prod
+   ```
+
+## トラブルシューティング
+
+### Slackコマンドがタイムアウトする
+
+- Vercel Functionsのリージョンが日本に設定されているか確認
+- データベースのレイテンシを確認（Neonの場合はシンガポールリージョン）
+- DATABASE_URLが正しく設定されているか確認
+
+## 開発
+
+### コード構成
+```
+src/
+├── app/
+│   ├── api/                # API Routes
+│   │   ├── start/         # /start コマンド
+│   │   ├── end/           # /end コマンド
+│   │   ├── break/         # /break コマンド
+│   │   ├── back/          # /back コマンド
+│   │   └── slack/         # Slack連携API
+│   └── attendance/        # Web管理画面
+├── components/            # React コンポーネント
+├── db/                   # データベース設定・スキーマ
+└── lib/                  # ユーティリティ・ビジネスロジック
 ```
