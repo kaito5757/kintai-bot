@@ -73,7 +73,9 @@ pnpm run dev
   - `message.channels`
 
 ### 3. Slash Commands
+
 以下の専用コマンドを設定：
+
 - Command: `/start`, Request URL: `https://your-domain.com/api/start`, Description: 業務開始
 - Command: `/end`, Request URL: `https://your-domain.com/api/end`, Description: 業務終了
 - Command: `/break`, Request URL: `https://your-domain.com/api/break`, Description: 休憩開始
@@ -164,7 +166,8 @@ pnpm run db:studio
 ## 開発
 
 ### コード構成
-```
+
+```bash
 src/
 ├── app/
 │   ├── api/                # API Routes
