@@ -2,7 +2,7 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from './schema';
 
-const connectionString = process.env.DATABASE_URL!;
+const connectionString = process.env.POSTGRES_URL!;
 const client = postgres(connectionString, {
   max: 5, // 最大接続数をさらに制限
   idle_timeout: 10, // アイドル接続のタイムアウトを短縮 (秒)
