@@ -4,6 +4,8 @@ import Navigation from '@/components/Navigation';
 import { getCompanies } from '@/lib/admin-data';
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic';
+
 interface Company {
   channelId: string;
   companyName: string;
@@ -58,7 +60,7 @@ export default async function AttendancePage() {
                   companies.map((company) => (
                     <tr key={company.channelId} className="hover:bg-gray-50">
                       <td className="px-6 py-4">
-                        <Link 
+                        <Link
                           href={`/attendance/${encodeURIComponent(company.channelId)}`}
                           className="block"
                         >
