@@ -155,22 +155,28 @@ export default function UserAttendanceClient({
 
     const workMinutesRounded = Math.floor(totalWorkMinutes);
     const breakMinutesRounded = Math.floor(totalBreakMinutes);
+    const actualWorkMinutesRounded = workMinutesRounded - breakMinutesRounded;
     
     const workHours = Math.floor(workMinutesRounded / 60);
     const workMinutes = workMinutesRounded % 60;
     const breakHours = Math.floor(breakMinutesRounded / 60);
     const breakMinutesRemainder = breakMinutesRounded % 60;
+    const actualWorkHours = Math.floor(actualWorkMinutesRounded / 60);
+    const actualWorkMinutes = actualWorkMinutesRounded % 60;
 
     const workTimeStr = workMinutesRounded < 1 ? '1分未満' : 
       workHours > 0 ? `${workHours}時間${workMinutes}分` : `${workMinutes}分`;
     const breakTimeStr = breakMinutesRounded < 1 ? '1分未満' : 
       breakHours > 0 ? `${breakHours}時間${breakMinutesRemainder}分` : `${breakMinutesRemainder}分`;
+    const actualWorkTimeStr = actualWorkMinutesRounded < 1 ? '1分未満' : 
+      actualWorkHours > 0 ? `${actualWorkHours}時間${actualWorkMinutes}分` : `${actualWorkMinutes}分`;
 
     return {
       totalSessions: sessions.length,
       completedSessions,
       workTime: workTimeStr,
       breakTime: breakTimeStr,
+      actualWorkTime: actualWorkTimeStr,
     };
   };
 
@@ -281,15 +287,7 @@ export default function UserAttendanceClient({
                   <h3 className="text-xl font-semibold text-gray-900 mb-4">
                     📊 {format(new Date(selectedMonth + '-01'), 'yyyy年MM月', { locale: ja })} 合計
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="bg-blue-50 p-4 rounded-lg">
-                      <div className="text-sm text-blue-600">総セッション数</div>
-                      <div className="text-2xl font-bold text-blue-900">{monthStats.totalSessions}</div>
-                    </div>
-                    <div className="bg-green-50 p-4 rounded-lg">
-                      <div className="text-sm text-green-600">完了セッション数</div>
-                      <div className="text-2xl font-bold text-green-900">{monthStats.completedSessions}</div>
-                    </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="bg-purple-50 p-4 rounded-lg">
                       <div className="text-sm text-purple-600">総勤務時間</div>
                       <div className="text-2xl font-bold text-purple-900">{monthStats.workTime}</div>
@@ -297,6 +295,10 @@ export default function UserAttendanceClient({
                     <div className="bg-orange-50 p-4 rounded-lg">
                       <div className="text-sm text-orange-600">総休憩時間</div>
                       <div className="text-2xl font-bold text-orange-900">{monthStats.breakTime}</div>
+                    </div>
+                    <div className="bg-indigo-50 p-4 rounded-lg">
+                      <div className="text-sm text-indigo-600">実質勤務時間</div>
+                      <div className="text-2xl font-bold text-indigo-900">{monthStats.actualWorkTime}</div>
                     </div>
                   </div>
                 </div>
@@ -359,11 +361,9 @@ export default function UserAttendanceClient({
                         </div>
                       </div>
                       <div className="flex space-x-4 text-sm text-gray-600">
-                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                          {stats.totalSessions}セッション
-                        </span>
                         <span>勤務: {stats.workTime}</span>
                         <span>休憩: {stats.breakTime}</span>
+                        <span className="font-medium text-indigo-700">実質: {stats.actualWorkTime}</span>
                       </div>
                     </div>
                     <div className="flex space-x-4 text-sm text-gray-500">
@@ -376,58 +376,54 @@ export default function UserAttendanceClient({
                   {/* アコーディオンコンテンツ */}
                   {isExpanded && (
                     <div className="border-t border-gray-200">
-                      {/* 業務セッション一覧 */}
+                      {/* 業務記録 */}
                       <div className="px-6 py-4">
-                        <h4 className="text-sm font-medium text-gray-900 mb-3">📋 業務セッション</h4>
-                        <div className="space-y-2">
+                        <h4 className="text-sm font-medium text-gray-900 mb-3">📋 業務記録</h4>
+                        <div className="space-y-3">
                           {daySessions
                             .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
                             .map((session) => (
-                            <div key={session.id} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded">
-                              <div className="flex items-center space-x-3">
-                                <span className="text-sm text-gray-600">
-                                  {formatTime(session.startTime)} 〜{' '}
-                                  {session.endTime ? formatTime(session.endTime) : (
-                                    <span className="text-green-600 font-medium">進行中</span>
-                                  )}
-                                </span>
-                                <span className="text-sm font-medium text-gray-900">
-                                  {calculateSessionDuration(session)}
-                                </span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* 休憩一覧 */}
-                      <div className="px-6 py-4 border-t border-gray-100">
-                        <h4 className="text-sm font-medium text-gray-900 mb-3">☕ 休憩記録</h4>
-                        <div className="space-y-2">
-                          {daySessions.flatMap(session => session.breaks).length === 0 ? (
-                            <div className="text-sm text-gray-500 py-2">休憩記録はありません</div>
-                          ) : (
-                            daySessions
-                              .flatMap(session => session.breaks)
-                              .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-                              .map((breakItem) => (
-                              <div key={breakItem.id} className="flex items-center justify-between py-2 px-3 bg-orange-50 rounded">
+                            <div key={session.id} className="bg-gray-50 rounded-lg p-3">
+                              {/* 業務セッション */}
+                              <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center space-x-3">
                                   <span className="text-sm text-gray-600">
-                                    {formatTime(breakItem.startTime)} 〜{' '}
-                                    {breakItem.endTime ? formatTime(breakItem.endTime) : (
-                                      <span className="text-orange-600 font-medium">休憩中</span>
+                                    {formatTime(session.startTime)} 〜{' '}
+                                    {session.endTime ? formatTime(session.endTime) : (
+                                      <span className="text-green-600 font-medium">進行中</span>
                                     )}
                                   </span>
                                   <span className="text-sm font-medium text-gray-900">
-                                    {breakItem.endTime ? 
-                                      calculateBreakDuration([breakItem]) : '進行中'
-                                    }
+                                    {calculateSessionDuration(session)}
                                   </span>
                                 </div>
                               </div>
-                            ))
-                          )}
+                              
+                              {/* 休憩記録（ネストされた表示） */}
+                              {session.breaks.length > 0 && (
+                                <div className="ml-6 space-y-1">
+                                  {session.breaks
+                                    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+                                    .map((breakItem) => (
+                                    <div key={breakItem.id} className="flex items-center space-x-3 text-sm">
+                                      <span className="text-orange-600">☕</span>
+                                      <span className="text-gray-600">
+                                        {formatTime(breakItem.startTime)} 〜{' '}
+                                        {breakItem.endTime ? formatTime(breakItem.endTime) : (
+                                          <span className="text-orange-600 font-medium">休憩中</span>
+                                        )}
+                                      </span>
+                                      <span className="text-gray-500">
+                                        {breakItem.endTime ? 
+                                          calculateBreakDuration([breakItem]) : '進行中'
+                                        }
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ))}
                         </div>
                       </div>
                     </div>
@@ -449,15 +445,7 @@ export default function UserAttendanceClient({
                   <h3 className="text-xl font-semibold text-gray-900 mb-4">
                     {format(new Date(month + '-01'), 'yyyy年MM月', { locale: ja })}
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                    <div className="bg-blue-50 p-4 rounded-lg">
-                      <div className="text-sm text-blue-600">総セッション数</div>
-                      <div className="text-2xl font-bold text-blue-900">{stats.totalSessions}</div>
-                    </div>
-                    <div className="bg-green-50 p-4 rounded-lg">
-                      <div className="text-sm text-green-600">完了セッション数</div>
-                      <div className="text-2xl font-bold text-green-900">{stats.completedSessions}</div>
-                    </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div className="bg-purple-50 p-4 rounded-lg">
                       <div className="text-sm text-purple-600">総勤務時間</div>
                       <div className="text-2xl font-bold text-purple-900">{stats.workTime}</div>
@@ -465,6 +453,10 @@ export default function UserAttendanceClient({
                     <div className="bg-orange-50 p-4 rounded-lg">
                       <div className="text-sm text-orange-600">総休憩時間</div>
                       <div className="text-2xl font-bold text-orange-900">{stats.breakTime}</div>
+                    </div>
+                    <div className="bg-indigo-50 p-4 rounded-lg">
+                      <div className="text-sm text-indigo-600">実質勤務時間</div>
+                      <div className="text-2xl font-bold text-indigo-900">{stats.actualWorkTime}</div>
                     </div>
                   </div>
                 </div>
