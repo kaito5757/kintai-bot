@@ -8,7 +8,6 @@ export default function Navigation() {
 
   const navigation = [
     { name: '勤怠管理', href: '/attendance', icon: '📊' },
-    { name: 'デバッグ', href: '/debug', icon: '🔧' },
   ];
 
   return (
