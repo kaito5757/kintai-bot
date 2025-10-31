@@ -142,7 +142,11 @@ function BreakAddForm({
   const sessionDate = format(new Date(sessionStartTime), "yyyy-MM-dd");
   const currentTime = format(new Date(), 'HH:mm');
   const [startTime, setStartTime] = useState(`${sessionDate}T${currentTime}`);
-  const [endTime, setEndTime] = useState('');
+  // 終了時刻も同じ日付で初期化（時刻は空にせず、開始時刻の1時間後）
+  const endTimeDate = new Date(sessionStartTime);
+  endTimeDate.setHours(new Date().getHours() + 1);
+  const endTimeInitial = `${sessionDate}T${format(endTimeDate, 'HH:mm')}`;
+  const [endTime, setEndTime] = useState(endTimeInitial);
 
   return (
     <div className="space-y-2 bg-green-50 p-2 rounded text-sm">
