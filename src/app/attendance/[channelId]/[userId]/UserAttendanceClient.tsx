@@ -250,18 +250,31 @@ export default function UserAttendanceClient({
     return format(new Date(dateString), 'HH:mm', { locale: ja });
   };
 
-  // UTCをJST(日本時間)の文字列に変換
+  // UTCをJST(日本時間)の文字列に変換（datetime-local用）
   const utcToJstInput = (utcDateString: string): string => {
-    const date = new Date(utcDateString);
-    const jstDate = new Date(date.getTime() + 9 * 60 * 60 * 1000);
-    return format(jstDate, "yyyy-MM-dd'T'HH:mm");
+    // UTC文字列をDateオブジェクトとして解釈（これは正しくUTCとして扱われる）
+    const utcDate = new Date(utcDateString);
+    // 日本時間 = UTC + 9時間
+    const jstTimestamp = utcDate.getTime() + 9 * 60 * 60 * 1000;
+    const jstDate = new Date(jstTimestamp);
+
+    // datetime-local形式に変換（YYYY-MM-DDTHH:mm）
+    const year = jstDate.getUTCFullYear();
+    const month = String(jstDate.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(jstDate.getUTCDate()).padStart(2, '0');
+    const hours = String(jstDate.getUTCHours()).padStart(2, '0');
+    const minutes = String(jstDate.getUTCMinutes()).padStart(2, '0');
+
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
   // JST(日本時間)の文字列をUTCに変換
   const jstToUtc = (jstDateTimeString: string): string => {
     if (!jstDateTimeString) return '';
+    // datetime-localの値をそのままタイムスタンプとして扱い、9時間を引く
     const jstDate = new Date(jstDateTimeString);
-    const utcDate = new Date(jstDate.getTime() - 9 * 60 * 60 * 1000);
+    const utcTimestamp = jstDate.getTime() - 9 * 60 * 60 * 1000;
+    const utcDate = new Date(utcTimestamp);
     return utcDate.toISOString();
   };
 
