@@ -6,9 +6,10 @@ import { eq } from 'drizzle-orm';
 // PATCH: 休憩記録の更新
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const { startTime, endTime } = body;
 
@@ -26,7 +27,7 @@ export async function PATCH(
         endTime: endTime ? new Date(endTime) : null,
         updatedAt: new Date(),
       })
-      .where(eq(breaks.id, params.id))
+      .where(eq(breaks.id, id))
       .returning();
 
     if (result.length === 0) {
@@ -49,12 +50,13 @@ export async function PATCH(
 // DELETE: 休憩記録の削除
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const result = await db
       .delete(breaks)
-      .where(eq(breaks.id, params.id))
+      .where(eq(breaks.id, id))
       .returning();
 
     if (result.length === 0) {
