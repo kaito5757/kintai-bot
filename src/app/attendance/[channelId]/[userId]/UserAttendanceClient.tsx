@@ -4,6 +4,184 @@ import { useState } from 'react';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 
+// 業務記録編集フォーム
+function SessionEditForm({
+  session,
+  onSave,
+  onCancel,
+  utcToJstInput,
+  loading,
+}: {
+  session: WorkSession;
+  onSave: (id: string, startTime: string, endTime: string) => void;
+  onCancel: () => void;
+  utcToJstInput: (date: string) => string;
+  loading: boolean;
+}) {
+  const [startTime, setStartTime] = useState(utcToJstInput(session.startTime));
+  const [endTime, setEndTime] = useState(session.endTime ? utcToJstInput(session.endTime) : '');
+
+  return (
+    <div className="space-y-2 bg-blue-50 p-3 rounded">
+      <div className="text-xs font-medium text-gray-700">業務時間を編集</div>
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label className="text-xs text-gray-600">開始</label>
+          <input
+            type="datetime-local"
+            value={startTime}
+            onChange={(e) => setStartTime(e.target.value)}
+            className="w-full text-xs px-2 py-1 border rounded"
+          />
+        </div>
+        <div>
+          <label className="text-xs text-gray-600">終了</label>
+          <input
+            type="datetime-local"
+            value={endTime}
+            onChange={(e) => setEndTime(e.target.value)}
+            className="w-full text-xs px-2 py-1 border rounded"
+          />
+        </div>
+      </div>
+      <div className="flex space-x-2">
+        <button
+          onClick={() => onSave(session.id, startTime, endTime)}
+          disabled={loading}
+          className="text-xs px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
+        >
+          {loading ? '保存中...' : '保存'}
+        </button>
+        <button
+          onClick={onCancel}
+          disabled={loading}
+          className="text-xs px-3 py-1 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+        >
+          キャンセル
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// 休憩記録編集フォーム
+function BreakEditForm({
+  breakItem,
+  onSave,
+  onCancel,
+  utcToJstInput,
+  loading,
+}: {
+  breakItem: Break;
+  onSave: (id: string, startTime: string, endTime: string) => void;
+  onCancel: () => void;
+  utcToJstInput: (date: string) => string;
+  loading: boolean;
+}) {
+  const [startTime, setStartTime] = useState(utcToJstInput(breakItem.startTime));
+  const [endTime, setEndTime] = useState(breakItem.endTime ? utcToJstInput(breakItem.endTime) : '');
+
+  return (
+    <div className="space-y-2 bg-orange-50 p-2 rounded text-sm">
+      <div className="text-xs font-medium text-gray-700">☕ 休憩時間を編集</div>
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label className="text-xs text-gray-600">開始</label>
+          <input
+            type="datetime-local"
+            value={startTime}
+            onChange={(e) => setStartTime(e.target.value)}
+            className="w-full text-xs px-2 py-1 border rounded"
+          />
+        </div>
+        <div>
+          <label className="text-xs text-gray-600">終了</label>
+          <input
+            type="datetime-local"
+            value={endTime}
+            onChange={(e) => setEndTime(e.target.value)}
+            className="w-full text-xs px-2 py-1 border rounded"
+          />
+        </div>
+      </div>
+      <div className="flex space-x-2">
+        <button
+          onClick={() => onSave(breakItem.id, startTime, endTime)}
+          disabled={loading}
+          className="text-xs px-3 py-1 bg-orange-600 text-white rounded hover:bg-orange-700 disabled:bg-gray-400"
+        >
+          {loading ? '保存中...' : '保存'}
+        </button>
+        <button
+          onClick={onCancel}
+          disabled={loading}
+          className="text-xs px-3 py-1 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+        >
+          キャンセル
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// 休憩記録追加フォーム
+function BreakAddForm({
+  sessionId,
+  onAdd,
+  onCancel,
+  loading,
+}: {
+  sessionId: string;
+  onAdd: (sessionId: string, startTime: string, endTime: string) => void;
+  onCancel: () => void;
+  loading: boolean;
+}) {
+  const [startTime, setStartTime] = useState(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
+  const [endTime, setEndTime] = useState('');
+
+  return (
+    <div className="space-y-2 bg-green-50 p-2 rounded text-sm">
+      <div className="text-xs font-medium text-gray-700">☕ 休憩を追加</div>
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label className="text-xs text-gray-600">開始（日本時間）</label>
+          <input
+            type="datetime-local"
+            value={startTime}
+            onChange={(e) => setStartTime(e.target.value)}
+            className="w-full text-xs px-2 py-1 border rounded"
+          />
+        </div>
+        <div>
+          <label className="text-xs text-gray-600">終了（日本時間）</label>
+          <input
+            type="datetime-local"
+            value={endTime}
+            onChange={(e) => setEndTime(e.target.value)}
+            className="w-full text-xs px-2 py-1 border rounded"
+          />
+        </div>
+      </div>
+      <div className="flex space-x-2">
+        <button
+          onClick={() => onAdd(sessionId, startTime, endTime)}
+          disabled={loading}
+          className="text-xs px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-400"
+        >
+          {loading ? '追加中...' : '追加'}
+        </button>
+        <button
+          onClick={onCancel}
+          disabled={loading}
+          className="text-xs px-3 py-1 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+        >
+          キャンセル
+        </button>
+      </div>
+    </div>
+  );
+}
+
 interface WorkSession {
   id: string;
   startTime: string;
@@ -49,14 +227,20 @@ interface UserAttendanceClientProps {
   user: WorkSession['user'] | null;
 }
 
-export default function UserAttendanceClient({ 
-  initialSessions, 
-  channelName, 
-  user 
+export default function UserAttendanceClient({
+  initialSessions,
+  channelName,
+  user
 }: UserAttendanceClientProps) {
+  const [sessions, setSessions] = useState<WorkSession[]>(initialSessions);
   const [viewMode, setViewMode] = useState<'daily' | 'monthly'>('daily');
   const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
   const [selectedMonth, setSelectedMonth] = useState<string>(format(new Date(), 'yyyy-MM'));
+  const [editingSession, setEditingSession] = useState<string | null>(null);
+  const [editingBreak, setEditingBreak] = useState<string | null>(null);
+  const [addingBreakFor, setAddingBreakFor] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const formatDateTime = (dateString: string) => {
     return format(new Date(dateString), 'yyyy/MM/dd HH:mm', { locale: ja });
@@ -64,6 +248,153 @@ export default function UserAttendanceClient({
 
   const formatTime = (dateString: string) => {
     return format(new Date(dateString), 'HH:mm', { locale: ja });
+  };
+
+  // UTCをJST(日本時間)の文字列に変換
+  const utcToJstInput = (utcDateString: string): string => {
+    const date = new Date(utcDateString);
+    const jstDate = new Date(date.getTime() + 9 * 60 * 60 * 1000);
+    return format(jstDate, "yyyy-MM-dd'T'HH:mm");
+  };
+
+  // JST(日本時間)の文字列をUTCに変換
+  const jstToUtc = (jstDateTimeString: string): string => {
+    if (!jstDateTimeString) return '';
+    const jstDate = new Date(jstDateTimeString);
+    const utcDate = new Date(jstDate.getTime() - 9 * 60 * 60 * 1000);
+    return utcDate.toISOString();
+  };
+
+  // 業務記録の更新
+  const handleUpdateSession = async (sessionId: string, startTime: string, endTime: string) => {
+    setLoading(true);
+    setMessage(null);
+    try {
+      const response = await fetch(`/api/work-sessions/${sessionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          startTime: jstToUtc(startTime),
+          endTime: endTime ? jstToUtc(endTime) : null,
+        }),
+      });
+
+      if (response.ok) {
+        setMessage({ type: 'success', text: '業務記録を更新しました' });
+        setEditingSession(null);
+        // セッションを再取得
+        window.location.reload();
+      } else {
+        setMessage({ type: 'error', text: '更新に失敗しました' });
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: '更新に失敗しました' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 業務記録の削除
+  const handleDeleteSession = async (sessionId: string) => {
+    if (!confirm('この業務記録を削除しますか？')) return;
+    setLoading(true);
+    setMessage(null);
+    try {
+      const response = await fetch(`/api/work-sessions/${sessionId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setMessage({ type: 'success', text: '業務記録を削除しました' });
+        window.location.reload();
+      } else {
+        setMessage({ type: 'error', text: '削除に失敗しました' });
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: '削除に失敗しました' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 休憩記録の更新
+  const handleUpdateBreak = async (breakId: string, startTime: string, endTime: string) => {
+    setLoading(true);
+    setMessage(null);
+    try {
+      const response = await fetch(`/api/breaks/${breakId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          startTime: jstToUtc(startTime),
+          endTime: endTime ? jstToUtc(endTime) : null,
+        }),
+      });
+
+      if (response.ok) {
+        setMessage({ type: 'success', text: '休憩記録を更新しました' });
+        setEditingBreak(null);
+        window.location.reload();
+      } else {
+        setMessage({ type: 'error', text: '更新に失敗しました' });
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: '更新に失敗しました' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 休憩記録の削除
+  const handleDeleteBreak = async (breakId: string) => {
+    if (!confirm('この休憩記録を削除しますか？')) return;
+    setLoading(true);
+    setMessage(null);
+    try {
+      const response = await fetch(`/api/breaks/${breakId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setMessage({ type: 'success', text: '休憩記録を削除しました' });
+        window.location.reload();
+      } else {
+        setMessage({ type: 'error', text: '削除に失敗しました' });
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: '削除に失敗しました' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 休憩記録の追加
+  const handleAddBreak = async (workSessionId: string, startTime: string, endTime: string) => {
+    setLoading(true);
+    setMessage(null);
+    try {
+      const response = await fetch('/api/breaks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          workSessionId,
+          startTime: jstToUtc(startTime),
+          endTime: endTime ? jstToUtc(endTime) : null,
+        }),
+      });
+
+      if (response.ok) {
+        setMessage({ type: 'success', text: '休憩記録を追加しました' });
+        setAddingBreakFor(null);
+        window.location.reload();
+      } else {
+        setMessage({ type: 'error', text: '追加に失敗しました' });
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: '追加に失敗しました' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const calculateSessionDuration = (session: WorkSession) => {
@@ -196,7 +527,7 @@ export default function UserAttendanceClient({
 
   const getAvailableMonths = () => {
     const months = new Set<string>();
-    initialSessions.forEach(session => {
+    sessions.forEach(session => {
       const monthKey = format(new Date(session.startTime), 'yyyy-MM');
       months.add(monthKey);
     });
@@ -205,15 +536,15 @@ export default function UserAttendanceClient({
 
   const getFilteredSessions = () => {
     if (viewMode === 'monthly') {
-      return initialSessions;
+      return sessions;
     }
-    return initialSessions.filter(session => {
+    return sessions.filter(session => {
       const sessionMonth = format(new Date(session.startTime), 'yyyy-MM');
       return sessionMonth === selectedMonth;
     });
   };
 
-  if (initialSessions.length === 0) {
+  if (sessions.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow p-8 text-center">
         <div className="text-gray-400">
@@ -229,6 +560,15 @@ export default function UserAttendanceClient({
 
   return (
     <>
+      {/* メッセージ表示 */}
+      {message && (
+        <div className={`mb-6 p-4 rounded-lg ${
+          message.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+        }`}>
+          {message.text}
+        </div>
+      )}
+
       {/* 表示モード切り替え */}
       <div className="mb-6">
         <div className="flex items-center justify-between">
@@ -385,43 +725,125 @@ export default function UserAttendanceClient({
                             .map((session) => (
                             <div key={session.id} className="bg-gray-50 rounded-lg p-3">
                               {/* 業務セッション */}
-                              <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center space-x-3">
-                                  <span className="text-sm text-gray-600">
-                                    {formatTime(session.startTime)} 〜{' '}
-                                    {session.endTime ? formatTime(session.endTime) : (
-                                      <span className="text-green-600 font-medium">進行中</span>
-                                    )}
-                                  </span>
-                                  <span className="text-sm font-medium text-gray-900">
-                                    {calculateSessionDuration(session)}
-                                  </span>
-                                </div>
-                              </div>
-                              
-                              {/* 休憩記録（ネストされた表示） */}
-                              {session.breaks.length > 0 && (
-                                <div className="ml-6 space-y-1">
-                                  {session.breaks
-                                    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-                                    .map((breakItem) => (
-                                    <div key={breakItem.id} className="flex items-center space-x-3 text-sm">
-                                      <span className="text-orange-600">☕</span>
-                                      <span className="text-gray-600">
-                                        {formatTime(breakItem.startTime)} 〜{' '}
-                                        {breakItem.endTime ? formatTime(breakItem.endTime) : (
-                                          <span className="text-orange-600 font-medium">休憩中</span>
-                                        )}
-                                      </span>
-                                      <span className="text-gray-500">
-                                        {breakItem.endTime ? 
-                                          calculateBreakDuration([breakItem]) : '進行中'
-                                        }
-                                      </span>
-                                    </div>
-                                  ))}
+                              {editingSession === session.id ? (
+                                <SessionEditForm
+                                  session={session}
+                                  onSave={handleUpdateSession}
+                                  onCancel={() => setEditingSession(null)}
+                                  utcToJstInput={utcToJstInput}
+                                  loading={loading}
+                                />
+                              ) : (
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="flex items-center space-x-3">
+                                    <span className="text-sm text-gray-600">
+                                      {formatTime(session.startTime)} 〜{' '}
+                                      {session.endTime ? formatTime(session.endTime) : (
+                                        <span className="text-green-600 font-medium">進行中</span>
+                                      )}
+                                    </span>
+                                    <span className="text-sm font-medium text-gray-900">
+                                      {calculateSessionDuration(session)}
+                                    </span>
+                                  </div>
+                                  <div className="flex space-x-2">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setEditingSession(session.id);
+                                      }}
+                                      className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                                    >
+                                      編集
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteSession(session.id);
+                                      }}
+                                      className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200"
+                                    >
+                                      削除
+                                    </button>
+                                  </div>
                                 </div>
                               )}
+                              
+                              {/* 休憩記録（ネストされた表示） */}
+                              <div className="ml-6 space-y-2 mt-2">
+                                {session.breaks
+                                  .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+                                  .map((breakItem) => (
+                                    editingBreak === breakItem.id ? (
+                                      <BreakEditForm
+                                        key={breakItem.id}
+                                        breakItem={breakItem}
+                                        onSave={handleUpdateBreak}
+                                        onCancel={() => setEditingBreak(null)}
+                                        utcToJstInput={utcToJstInput}
+                                        loading={loading}
+                                      />
+                                    ) : (
+                                      <div key={breakItem.id} className="flex items-center justify-between text-sm bg-white p-2 rounded">
+                                        <div className="flex items-center space-x-3">
+                                          <span className="text-orange-600">☕</span>
+                                          <span className="text-gray-600">
+                                            {formatTime(breakItem.startTime)} 〜{' '}
+                                            {breakItem.endTime ? formatTime(breakItem.endTime) : (
+                                              <span className="text-orange-600 font-medium">休憩中</span>
+                                            )}
+                                          </span>
+                                          <span className="text-gray-500">
+                                            {breakItem.endTime ?
+                                              calculateBreakDuration([breakItem]) : '進行中'
+                                            }
+                                          </span>
+                                        </div>
+                                        <div className="flex space-x-2">
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setEditingBreak(breakItem.id);
+                                            }}
+                                            className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                                          >
+                                            編集
+                                          </button>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleDeleteBreak(breakItem.id);
+                                            }}
+                                            className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200"
+                                          >
+                                            削除
+                                          </button>
+                                        </div>
+                                      </div>
+                                    )
+                                  ))}
+
+                                {/* 休憩追加フォーム */}
+                                {addingBreakFor === session.id ? (
+                                  <BreakAddForm
+                                    sessionId={session.id}
+                                    onAdd={handleAddBreak}
+                                    onCancel={() => setAddingBreakFor(null)}
+                                    loading={loading}
+                                  />
+                                ) : (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setAddingBreakFor(session.id);
+                                    }}
+                                    className="text-xs px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 flex items-center space-x-1"
+                                  >
+                                    <span>+</span>
+                                    <span>休憩を追加</span>
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -436,7 +858,7 @@ export default function UserAttendanceClient({
         </div>
       ) : (
         <div className="space-y-6">
-          {Object.entries(groupSessionsByMonth(initialSessions))
+          {Object.entries(groupSessionsByMonth(sessions))
             .sort(([a], [b]) => a.localeCompare(b))
             .map(([month, monthSessions]) => {
               const stats = calculateMonthlyStats(monthSessions);
