@@ -22,6 +22,16 @@ export default function DebugPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
+  // 日本時間の文字列をUTCのISO文字列に変換
+  const jstToUtc = (jstDateTimeString: string): string => {
+    if (!jstDateTimeString) return '';
+    // 日本時間として解釈 (UTC+9)
+    const jstDate = new Date(jstDateTimeString);
+    // 9時間を引いてUTCに変換
+    const utcDate = new Date(jstDate.getTime() - 9 * 60 * 60 * 1000);
+    return utcDate.toISOString();
+  };
+
   const handleAddWorkSession = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -33,7 +43,12 @@ export default function DebugPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(workSession),
+        body: JSON.stringify({
+          userId: workSession.userId,
+          channelId: workSession.channelId,
+          startTime: jstToUtc(workSession.startTime),
+          endTime: workSession.endTime ? jstToUtc(workSession.endTime) : '',
+        }),
       });
 
       if (response.ok) {
@@ -67,7 +82,11 @@ export default function DebugPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(breakSession),
+        body: JSON.stringify({
+          workSessionId: breakSession.workSessionId,
+          startTime: jstToUtc(breakSession.startTime),
+          endTime: breakSession.endTime ? jstToUtc(breakSession.endTime) : '',
+        }),
       });
 
       if (response.ok) {
@@ -136,7 +155,7 @@ export default function DebugPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  開始時刻
+                  開始時刻（日本時間）
                 </label>
                 <input
                   type="datetime-local"
@@ -149,7 +168,7 @@ export default function DebugPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  終了時刻（任意）
+                  終了時刻（日本時間・任意）
                 </label>
                 <input
                   type="datetime-local"
@@ -188,7 +207,7 @@ export default function DebugPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  開始時刻
+                  開始時刻（日本時間）
                 </label>
                 <input
                   type="datetime-local"
@@ -201,7 +220,7 @@ export default function DebugPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  終了時刻（任意）
+                  終了時刻（日本時間・任意）
                 </label>
                 <input
                   type="datetime-local"
@@ -230,6 +249,7 @@ export default function DebugPage() {
             <li>• 業務記録を追加すると、そのIDが返されます</li>
             <li>• 休憩記録は業務セッションIDに紐づけて追加してください</li>
             <li>• 終了時刻を空にすると「進行中」として記録されます</li>
+            <li>• 時刻は日本時間で入力してください（DBにはUTCで保存されます）</li>
           </ul>
         </div>
       </div>
