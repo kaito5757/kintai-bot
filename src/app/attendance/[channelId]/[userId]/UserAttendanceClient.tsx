@@ -235,12 +235,27 @@ export default function UserAttendanceClient({
   const [sessions, setSessions] = useState<WorkSession[]>(initialSessions);
   const [viewMode, setViewMode] = useState<'daily' | 'monthly'>('daily');
   const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
-  const [selectedMonth, setSelectedMonth] = useState<string>(format(new Date(), 'yyyy-MM'));
+  // URLパラメータから月を取得、なければ現在の月
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('month') || format(new Date(), 'yyyy-MM');
+    }
+    return format(new Date(), 'yyyy-MM');
+  });
   const [editingSession, setEditingSession] = useState<string | null>(null);
   const [editingBreak, setEditingBreak] = useState<string | null>(null);
   const [addingBreakFor, setAddingBreakFor] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // 月を選択したらURLを更新
+  const handleMonthChange = (month: string) => {
+    setSelectedMonth(month);
+    const url = new URL(window.location.href);
+    url.searchParams.set('month', month);
+    window.history.pushState({}, '', url.toString());
+  };
 
   const formatDateTime = (dateString: string) => {
     return format(new Date(dateString), 'yyyy/MM/dd HH:mm', { locale: ja });
@@ -271,10 +286,16 @@ export default function UserAttendanceClient({
   // JST(日本時間)の文字列をUTCに変換
   const jstToUtc = (jstDateTimeString: string): string => {
     if (!jstDateTimeString) return '';
-    // datetime-localの値をそのままタイムスタンプとして扱い、9時間を引く
-    const jstDate = new Date(jstDateTimeString);
-    const utcTimestamp = jstDate.getTime() - 9 * 60 * 60 * 1000;
-    const utcDate = new Date(utcTimestamp);
+
+    // datetime-localの値（例: "2025-01-15T10:30"）をパース
+    const [datePart, timePart] = jstDateTimeString.split('T');
+    const [year, month, day] = datePart.split('-').map(Number);
+    const [hours, minutes] = timePart.split(':').map(Number);
+
+    // 日本時間としてDateオブジェクトを作成（UTC基準で作成）
+    // 日本時間 = UTC + 9時間なので、UTC = 日本時間 - 9時間
+    const utcDate = new Date(Date.UTC(year, month - 1, day, hours - 9, minutes));
+
     return utcDate.toISOString();
   };
 
@@ -614,7 +635,7 @@ export default function UserAttendanceClient({
               <label className="text-sm text-gray-600">表示月:</label>
               <select
                 value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
+                onChange={(e) => handleMonthChange(e.target.value)}
                 className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {getAvailableMonths().map(month => (
