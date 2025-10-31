@@ -53,9 +53,10 @@ export default async function UserAttendancePage({ params }: PageProps) {
         </div>
 
         {/* クライアントコンポーネントに渡す */}
-        <UserAttendanceClient 
-          initialSessions={sessionsData} 
+        <UserAttendanceClient
+          initialSessions={sessionsData}
           channelName={channelName}
+          channelId={decodedChannelId}
           user={user}
         />
       </div>

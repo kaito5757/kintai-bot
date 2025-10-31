@@ -182,6 +182,64 @@ function BreakAddForm({
   );
 }
 
+// 業務記録追加フォーム
+function WorkSessionAddForm({
+  onAdd,
+  onCancel,
+  loading,
+}: {
+  onAdd: (startTime: string, endTime: string) => void;
+  onCancel: () => void;
+  loading: boolean;
+}) {
+  const [startTime, setStartTime] = useState(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
+  const [endTime, setEndTime] = useState('');
+
+  return (
+    <div className="bg-white rounded-lg shadow p-6 mb-4">
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-gray-900">📝 業務記録を追加</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">開始時刻（日本時間）</label>
+            <input
+              type="datetime-local"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">終了時刻（日本時間・任意）</label>
+            <input
+              type="datetime-local"
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+        <div className="flex space-x-3">
+          <button
+            onClick={() => onAdd(startTime, endTime)}
+            disabled={loading}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400"
+          >
+            {loading ? '追加中...' : '追加'}
+          </button>
+          <button
+            onClick={onCancel}
+            disabled={loading}
+            className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+          >
+            キャンセル
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface WorkSession {
   id: string;
   startTime: string;
@@ -224,12 +282,14 @@ interface Break {
 interface UserAttendanceClientProps {
   initialSessions: WorkSession[];
   channelName: string;
+  channelId: string;
   user: WorkSession['user'] | null;
 }
 
 export default function UserAttendanceClient({
   initialSessions,
   channelName,
+  channelId,
   user
 }: UserAttendanceClientProps) {
   const [sessions, setSessions] = useState<WorkSession[]>(initialSessions);
@@ -246,6 +306,7 @@ export default function UserAttendanceClient({
   const [editingSession, setEditingSession] = useState<string | null>(null);
   const [editingBreak, setEditingBreak] = useState<string | null>(null);
   const [addingBreakFor, setAddingBreakFor] = useState<string | null>(null);
+  const [addingWorkSession, setAddingWorkSession] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -420,6 +481,37 @@ export default function UserAttendanceClient({
       if (response.ok) {
         setMessage({ type: 'success', text: '休憩記録を追加しました' });
         setAddingBreakFor(null);
+        window.location.reload();
+      } else {
+        setMessage({ type: 'error', text: '追加に失敗しました' });
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: '追加に失敗しました' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 業務記録の追加
+  const handleAddWorkSession = async (startTime: string, endTime: string) => {
+    if (!user) return;
+    setLoading(true);
+    setMessage(null);
+    try {
+      const response = await fetch('/api/work-sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.slackUserId,
+          channelId: channelId,
+          startTime: jstToUtc(startTime),
+          endTime: endTime ? jstToUtc(endTime) : null,
+        }),
+      });
+
+      if (response.ok) {
+        setMessage({ type: 'success', text: '業務記録を追加しました' });
+        setAddingWorkSession(false);
         window.location.reload();
       } else {
         setMessage({ type: 'error', text: '追加に失敗しました' });
@@ -651,6 +743,23 @@ export default function UserAttendanceClient({
 
       {viewMode === 'daily' ? (
         <div className="space-y-6">
+          {/* 業務記録追加ボタン */}
+          {!addingWorkSession ? (
+            <button
+              onClick={() => setAddingWorkSession(true)}
+              className="w-full md:w-auto px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium flex items-center justify-center space-x-2"
+            >
+              <span>+</span>
+              <span>業務記録を追加</span>
+            </button>
+          ) : (
+            <WorkSessionAddForm
+              onAdd={handleAddWorkSession}
+              onCancel={() => setAddingWorkSession(false)}
+              loading={loading}
+            />
+          )}
+
           {/* 月合計統計 */}
           {(() => {
             const filteredSessions = getFilteredSessions();
