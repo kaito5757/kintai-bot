@@ -127,16 +127,21 @@ function BreakEditForm({
 // 休憩記録追加フォーム
 function BreakAddForm({
   sessionId,
+  sessionStartTime,
   onAdd,
   onCancel,
   loading,
 }: {
   sessionId: string;
+  sessionStartTime: string;
   onAdd: (sessionId: string, startTime: string, endTime: string) => void;
   onCancel: () => void;
   loading: boolean;
 }) {
-  const [startTime, setStartTime] = useState(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
+  // 業務記録の日付を初期値として使用
+  const sessionDate = format(new Date(sessionStartTime), "yyyy-MM-dd");
+  const currentTime = format(new Date(), 'HH:mm');
+  const [startTime, setStartTime] = useState(`${sessionDate}T${currentTime}`);
   const [endTime, setEndTime] = useState('');
 
   return (
@@ -970,6 +975,7 @@ export default function UserAttendanceClient({
                                 {addingBreakFor === session.id ? (
                                   <BreakAddForm
                                     sessionId={session.id}
+                                    sessionStartTime={session.startTime}
                                     onAdd={handleAddBreak}
                                     onCancel={() => setAddingBreakFor(null)}
                                     loading={loading}
